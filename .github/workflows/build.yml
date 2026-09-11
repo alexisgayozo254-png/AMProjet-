@@ -2,9 +2,6 @@ name: Construir APK
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - main
 
 jobs:
   build:
@@ -22,36 +19,19 @@ jobs:
 
       - name: Preparar proyecto
         run: |
-          mkdir -p proyecto
-          ZIP=$(find . -maxdepth 1 -type f \( -iname "*.zip" \) | head -n 1)
-
-          if [ -n "$ZIP" ]; then
-            unzip -q "$ZIP" -d proyecto
-          else
-            cp -r . proyecto
+          cd proyecto/AMPProject
+          if [ ! -f gradlew ]; then
+            gradle wrapper
           fi
-
-          GRADLEW=$(find proyecto -type f -name gradlew | head -n 1)
-
-          if [ -z "$GRADLEW" ]; then
-            echo "ERROR: No se encontró gradlew dentro del proyecto."
-            find proyecto -maxdepth 4 -type f | head -100
-            exit 1
-          fi
-
-          ROOT=$(dirname "$GRADLEW")
-          echo "PROJECT_ROOT=$ROOT" >> "$GITHUB_ENV"
-
-      - name: Dar permisos a Gradle
-        run: chmod +x "$PROJECT_ROOT/gradlew"
+          chmod +x gradlew
 
       - name: Construir APK
-        working-directory: ${{ env.PROJECT_ROOT }}
-        run: ./gradlew assembleDebug --stacktrace
+        run: |
+          cd proyecto/AMPProject
+          ./gradlew assembleDebug
 
       - name: Guardar APK
         uses: actions/upload-artifact@v4
         with:
-          name: AMProject-APK
-          path: |
-            ${{ env.PROJECT_ROOT }}/**/build/outputs/apk/**/*.apk
+          name: APK
+          path: proyecto/AMPProject/app/build/outputs/apk/debug/*.apk
