@@ -1,57 +1,35 @@
-name: Construir APK
+name: Build APK
 
 on:
-  workflow_dispatch:
   push:
     branches:
       - main
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Descargar repositorio
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Configurar Java
+      - name: Set up Java
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
 
-      - name: Preparar proyecto
-        run: |
-          mkdir -p proyecto
-          ZIP=$(find . -maxdepth 1 -type f \( -iname "*.zip" \) | head -n 1)
+      - name: Give permission to gradlew
+        working-directory: ./AMProject
+        run: chmod +x gradlew
 
-          if [ -n "$ZIP" ]; then
-            unzip -q "$ZIP" -d proyecto
-          else
-            cp -r . proyecto
-          fi
-
-          GRADLEW=$(find proyecto -type f -name gradlew | head -n 1)
-
-          if [ -z "$GRADLEW" ]; then
-            echo "ERROR: No se encontró gradlew dentro del proyecto."
-            find proyecto -maxdepth 4 -type f | head -100
-            exit 1
-          fi
-
-          ROOT=$(dirname "$GRADLEW")
-          echo "PROJECT_ROOT=$ROOT" >> "$GITHUB_ENV"
-
-      - name: Dar permisos a Gradle
-        run: chmod +x "$PROJECT_ROOT/gradlew"
-
-      - name: Construir APK
-        working-directory: ${{ env.PROJECT_ROOT }}
+      - name: Build APK
+        working-directory: ./AMProject
         run: ./gradlew assembleDebug --stacktrace
 
-      - name: Guardar APK
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: AMProject-APK
-          path: |
-            ${{ env.PROJECT_ROOT }}/**/build/outputs/apk/**/*.apk
+          name: app-debug
+          path: AMProject/app/build/outputs/apk/debug/app-debug.apk
