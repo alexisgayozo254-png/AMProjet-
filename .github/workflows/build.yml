@@ -1,7 +1,10 @@
-name: build
+name: Build APK
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - main
 
 jobs:
   build:
@@ -18,16 +21,16 @@ jobs:
           java-version: '17'
 
       - name: Configurar Gradle
-        uses: gradle/actions/setup-gradle@v4
+        uses: gradle/actions/setup-gradle@v6
         with:
           gradle-version: '8.7'
 
       - name: Construir APK
         working-directory: proyecto/AMProject
-        run: gradle assembleDebug
+        run: gradle assembleDebug --no-daemon
 
       - name: Guardar APK
         uses: actions/upload-artifact@v4
         with:
-          name: app-debug
-          path: proyecto/AMProject/app/build/outputs/apk/debug/app-debug.apk
+          name: APK
+          path: proyecto/AMProject/app/build/outputs/apk/debug/*.apk
